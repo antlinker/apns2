@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sideshow/apns2"
-	"github.com/sideshow/apns2/certificate"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/antlinker/apns2"
+	"github.com/antlinker/apns2/certificate"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -22,10 +22,10 @@ func main() {
 	kingpin.UsageTemplate(kingpin.CompactUsageTemplate).Version("0.1").Author("Alisson Sales")
 	kingpin.CommandLine.Help = `Listens to STDIN to send notifications and writes APNS response code and reason to STDOUT.
 	The expected format is: <DeviceToken> <APNS Payload>
-	Example: aff0c63d9eaa63ad161bafee732d5bc2c31f66d552054718ff19ce314371e5d0 {"aps": {"alert": "hi"}}`
+	Example: test c9b0a6ec0903b4654b1dce1acdf80b1d39ff3f93c38ded7c0b1c34683ccafda0 {"aps": {"alert": "hi"}}`
 	kingpin.Parse()
 
-	cert, pemErr := certificate.FromPemFile(*certificatePath, "")
+	cert, pemErr := certificate.FromPemFile(*certificatePath, "123456")
 
 	if pemErr != nil {
 		log.Fatalf("Error retrieving certificate `%v`: %v", certificatePath, pemErr)
@@ -43,14 +43,15 @@ func main() {
 
 	for scanner.Scan() {
 		in := scanner.Text()
-		notificationArgs := strings.SplitN(in, " ", 2)
-		token := notificationArgs[0]
-		payload := notificationArgs[1]
-
+		notificationArgs := strings.SplitN(in, " ", 3)
+		CollapseID := notificationArgs[0]
+		token := notificationArgs[1]
+		payload := notificationArgs[2]
 		notification := &apns2.Notification{
 			DeviceToken: token,
 			Topic:       *topic,
 			Payload:     payload,
+			CollapseID:  CollapseID,
 		}
 
 		res, err := client.Push(notification)
